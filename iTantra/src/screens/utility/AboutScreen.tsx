@@ -10,10 +10,17 @@ import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'About'>;
 
 const TECH_FEATURES = [
-  { icon: 'hardware-chip-outline' as const, lib: 'ion', label: 'On-Device AI' },
-  { icon: 'mic-outline' as const, lib: 'ion', label: 'Speech-to-Text' },
-  { icon: 'volume-high-outline' as const, lib: 'ion', label: 'Text-to-Speech' },
-  { icon: 'access-point-network' as const, lib: 'mci', label: 'Offline Mesh' },
+  { icon: 'hardware-chip-outline' as const, lib: 'ion', label: 'INT8 STT' },
+  { icon: 'pulse-outline' as const, lib: 'ion', label: 'VAD Gating' },
+  { icon: 'volume-high-outline' as const, lib: 'ion', label: 'Offline TTS' },
+  { icon: 'access-point-network' as const, lib: 'mci', label: 'Gossip Mesh' },
+] as const;
+
+const SPECS = [
+  { label: 'Languages', value: '10 Indian' },
+  { label: 'Payload', value: '~120 bytes' },
+  { label: 'Primary Link', value: 'Wi-Fi Direct' },
+  { label: 'Fallback', value: 'Bluetooth' },
 ] as const;
 
 export default function AboutScreen({ navigation }: Props) {
@@ -37,9 +44,19 @@ export default function AboutScreen({ navigation }: Props) {
       {/* Description */}
       <View style={styles.descCard}>
         <Text style={styles.desc}>
-          An AI-powered, offline-first communication platform that connects people
-          when it matters most — no internet required.
+          Offline multilingual neural transceiver for speech-to-text-to-speech
+          communication across nearby devices. It sends compact UTF-8 packets
+          instead of raw audio, with emergency messages prioritized across the mesh.
         </Text>
+      </View>
+
+      <View style={styles.specGrid}>
+        {SPECS.map(s => (
+          <View key={s.label} style={styles.specItem}>
+            <Text style={styles.specValue}>{s.value}</Text>
+            <Text style={styles.specLabel}>{s.label}</Text>
+          </View>
+        ))}
       </View>
 
       {/* Tech features grid */}
@@ -123,6 +140,30 @@ const styles = StyleSheet.create({
     color: COLORS.textSecondary,
     lineHeight: 24,
     textAlign: 'center',
+  },
+  specGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
+    marginBottom: SPACING.lg,
+  },
+  specItem: {
+    width: '48%',
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 14,
+    ...SHADOW.xs,
+  },
+  specValue: {
+    ...TYPOGRAPHY.titleSmall,
+    color: COLORS.textPrimary,
+  },
+  specLabel: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    marginTop: 2,
   },
   sectionLabel: {
     ...TYPOGRAPHY.captionMedium,

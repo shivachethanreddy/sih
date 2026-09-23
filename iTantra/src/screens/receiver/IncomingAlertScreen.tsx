@@ -53,7 +53,7 @@ export default function IncomingAlertScreen({ navigation }: Props) {
           <Ionicons name="person" size={22} color={COLORS.primary} />
         </View>
         <View style={styles.senderInfo}>
-          <Text style={styles.senderName}>{msg?.from ?? 'Rescue_01'}</Text>
+          <Text style={styles.senderName}>{msg?.from ?? 'Device_A'}</Text>
           <Text style={styles.senderMeta}>Device ID: R01-A7  ·  1.2 m away</Text>
         </View>
         <StatusBadge label="Live" severity="info" dot />

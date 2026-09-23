@@ -43,15 +43,19 @@ const rowStyles = StyleSheet.create({
 });
 
 export default function BroadcastingScreen({ navigation, route }: Props) {
-  const { messages, devices, channel } = useApp();
+  const { messages, channel, lastSendError } = useApp();
   const msg = messages.find(m => m.id === route.params.messageId);
+  const isDirect = Boolean(msg?.to);
+  const status = msg?.status ?? 'SENDING';
 
   useEffect(() => {
-    const t = setTimeout(() => {
-      navigation.replace('BroadcastSuccess', { messageId: route.params.messageId });
-    }, 2800);
-    return () => clearTimeout(t);
-  }, [navigation, route.params.messageId]);
+    if (status === 'DELIVERED') {
+      const t = setTimeout(() => {
+        navigation.replace('BroadcastSuccess', { messageId: route.params.messageId });
+      }, 400);
+      return () => clearTimeout(t);
+    }
+  }, [status, navigation, route.params.messageId]);
 
   return (
     <Screen padded>
@@ -59,7 +63,17 @@ export default function BroadcastingScreen({ navigation, route }: Props) {
         {/* Status label */}
         <View style={styles.statusPill}>
           <View style={styles.statusDot} />
-          <Text style={styles.statusText}>Broadcasting</Text>
+          <Text style={styles.statusText}>
+            {status === 'FAILED'
+              ? 'Delivery failed'
+              : status === 'DELIVERED'
+              ? 'Delivered'
+              : status === 'RETRYING'
+              ? 'Retrying...'
+              : isDirect
+              ? 'Sending privately'
+              : 'Transmitting'}
+          </Text>
         </View>
 
         {/* Pulsing icon */}
@@ -77,23 +91,29 @@ export default function BroadcastingScreen({ navigation, route }: Props) {
 
         {/* Sending info */}
         <Text style={styles.sendingLabel}>
-          Sending to {devices.length} device{devices.length !== 1 ? 's' : ''}
+          {status === 'FAILED'
+            ? lastSendError ?? 'No connected peers'
+            : isDirect
+            ? `Sending to ${msg?.to}`
+            : 'Sending to connected peers'}
         </Text>
         <Text style={styles.sendingHint}>
-          Keep this screen open until broadcast completes.
+          {status === 'FAILED'
+            ? 'The packet was not acknowledged.'
+            : 'Keep this screen open until the engine reports delivery.'}
         </Text>
 
         {/* Info card */}
         <View style={styles.card}>
-          <InfoRow label="Channel" value={channel.label} />
+          <InfoRow label={isDirect ? 'Recipient' : 'Channel'} value={isDirect ? msg?.to ?? 'Selected device' : channel.label} />
           <InfoRow label="Message" value={msg?.tag.replace('#', '') ?? 'Voice Message'} />
           <InfoRow label="Language" value={msg?.language ?? 'English'} />
-          <InfoRow label="Priority" value={msg?.priority ?? 'Normal'} last />
+          <InfoRow label="Status" value={status} last />
         </View>
       </View>
 
       <PrimaryButton
-        label="Cancel Broadcast"
+        label={isDirect ? 'Cancel Send' : 'Cancel Broadcast'}
         icon="close"
         variant="ghost"
         onPress={() => navigation.goBack()}

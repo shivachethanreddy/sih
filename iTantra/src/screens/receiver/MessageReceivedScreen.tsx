@@ -40,13 +40,14 @@ const metaStyles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
     paddingVertical: 13,
+    gap: 12,
   },
   bordered: {
     borderBottomWidth: 1,
     borderBottomColor: COLORS.borderSoft,
   },
-  label: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary },
-  value: { ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary, fontWeight: '600' },
+  label: { ...TYPOGRAPHY.bodySmall, color: COLORS.textSecondary, flex: 1 },
+  value: { ...TYPOGRAPHY.bodySmall, color: COLORS.textPrimary, fontWeight: '600', flexShrink: 0, textAlign: 'right' },
 });
 
 export default function MessageReceivedScreen({ navigation, route }: Props) {
@@ -93,11 +94,10 @@ export default function MessageReceivedScreen({ navigation, route }: Props) {
 
       </View>
 
-      {/* Metadata */}
+{/* Metadata */}
       <View style={styles.metaCard}>
         <MetaRow label="Priority" value={msg.priority} valueColor={msg.priority !== 'Normal' ? COLORS.warning : undefined} />
         <MetaRow label="Language" value={msg.language} />
-        <MetaRow label="Auto Translate" value={msg.translatedTo ?? 'English'} valueColor={COLORS.primary} />
         <MetaRow label="Time Received" value={msg.time} last />
       </View>
 

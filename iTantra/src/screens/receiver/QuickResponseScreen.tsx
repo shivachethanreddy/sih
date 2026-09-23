@@ -1,10 +1,20 @@
-import React, { useState } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useRef, useState } from 'react';
+import {
+  Animated,
+  Keyboard,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
+} from 'react-native';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import Screen from '../../components/Screen';
 import Header from '../../components/Header';
+import PulsingRings from '../../components/PulsingRings';
 import PrimaryButton from '../../components/PrimaryButton';
 import EmptyState from '../../components/EmptyState';
 import { useApp } from '../../context/AppContext';
@@ -14,22 +24,72 @@ import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'QuickResponse'>;
 
 const TABS = ['Pre-set', 'Voice Reply', 'Text Reply'] as const;
+const MAX_TEXT = 200;
 
 export default function QuickResponseScreen({ navigation, route }: Props) {
-  const { sendQuickReply } = useApp();
-  const to = route.params?.to ?? 'Rescue_01';
+  const { sendQuickReply, transcribeAudio } = useApp();
+  const to = route.params?.to ?? 'Device_A';
   const [tab, setTab] = useState<(typeof TABS)[number]>('Pre-set');
   const [selected, setSelected] = useState(QUICK_REPLIES[0].id);
+  const [recording, setRecording] = useState(false);
+  const [text, setText] = useState('');
+  const pressStart = useRef(0);
+  const busy = useRef(false);
+  const pttScale = useRef(new Animated.Value(1)).current;
 
   const selectedReply = QUICK_REPLIES.find(r => r.id === selected) ?? QUICK_REPLIES[0];
 
-  const send = () => {
-    sendQuickReply(selectedReply.text, to);
+  const startTalk = () => {
+    pressStart.current = Date.now();
+    setRecording(true);
+    Animated.spring(pttScale, {
+      toValue: 0.92,
+      useNativeDriver: true,
+      speed: 40,
+      bounciness: 3,
+    }).start();
+  };
+
+  const stopTalk = async () => {
+    Animated.spring(pttScale, {
+      toValue: 1,
+      useNativeDriver: true,
+      speed: 28,
+      bounciness: 6,
+    }).start();
+
+    setRecording(false);
+    const held = Date.now() - pressStart.current;
+    if (held < 350 || busy.current) return;
+    busy.current = true;
+    const transcribedText = await transcribeAudio();
+    sendQuickReply(transcribedText, to);
+    busy.current = false;
     navigation.navigate('ReplySent', { to });
   };
 
+  const sendText = () => {
+    if (!text.trim()) return;
+    sendQuickReply(text.trim(), to);
+    navigation.navigate('ReplySent', { to });
+  };
+
+  const send = () => {
+    if (tab === 'Pre-set') {
+      sendQuickReply(selectedReply.text, to);
+      navigation.navigate('ReplySent', { to });
+    } else if (tab === 'Voice Reply') {
+      // Voice reply uses PTT button
+    } else if (tab === 'Text Reply') {
+      sendText();
+    }
+  };
+
+  const charsLeft = MAX_TEXT - text.length;
+  const nearLimit = charsLeft <= 30;
+
   return (
-    <Screen padded>
+    <Screen padded avoidKeyboard>
       <Header
         title="Quick Response"
         subtitle={`Replying to ${to}`}
@@ -44,7 +104,7 @@ export default function QuickResponseScreen({ navigation, route }: Props) {
             <Pressable
               key={t}
               style={[styles.tab, active && styles.tabActive]}
-              onPress={() => setTab(t)}
+              onPress={() => { setTab(t); Keyboard.dismiss(); }}
               accessibilityRole="tab"
               accessibilityState={{ selected: active }}
             >
@@ -99,26 +159,79 @@ export default function QuickResponseScreen({ navigation, route }: Props) {
             );
           })}
         </ScrollView>
+      ) : tab === 'Voice Reply' ? (
+        <View style={styles.voiceReplyContent}>
+          <Text style={styles.voiceInstruction}>Hold the button to record your voice reply</Text>
+
+          {/* PTT button */}
+          <View style={styles.pttWrap}>
+            <PulsingRings
+              size={118}
+              color={recording ? COLORS.accent : COLORS.primary}
+              active={recording}
+            >
+              <Animated.View style={{ transform: [{ scale: pttScale }] }}>
+                <Pressable
+                  onPressIn={startTalk}
+                  onPressOut={stopTalk}
+                  style={[
+                    styles.pttBtn,
+                    recording ? styles.pttBtnActive : null,
+                    recording ? SHADOW.orange : SHADOW.blue,
+                  ]}
+                  accessibilityRole="button"
+                  accessibilityLabel={recording ? 'Release to send' : 'Hold to speak'}
+                >
+                  <Ionicons
+                    name={recording ? 'mic' : 'mic-outline'}
+                    size={40}
+                    color={COLORS.white}
+                  />
+                </Pressable>
+              </Animated.View>
+            </PulsingRings>
+            <Text style={[styles.pttLabel, recording && { color: COLORS.accent }]}>
+              {recording ? 'Recording...' : 'Hold to Speak'}
+            </Text>
+          </View>
+
+          <View style={{ flex: 1 }} />
+        </View>
       ) : (
-        <View style={styles.placeholder}>
-          <EmptyState
-            icon={tab === 'Voice Reply' ? 'mic-outline' : 'chatbox-ellipses-outline'}
-            title={tab === 'Voice Reply' ? 'Voice Reply' : 'Text Reply'}
-            body={
-              tab === 'Voice Reply'
-                ? 'Hold the mic button on the Home screen to record a voice reply.'
-                : 'Type a custom message from the Broadcast screen.'
-            }
-          />
+        <View style={styles.textReplyContent}>
+          <Text style={styles.voiceInstruction}>Type your custom reply</Text>
+
+          {/* Text input */}
+          <View style={styles.inputCard}>
+            <TextInput
+              style={styles.input}
+              placeholder="Type your reply here..."
+              placeholderTextColor={COLORS.textMuted}
+              multiline
+              maxLength={MAX_TEXT}
+              value={text}
+              onChangeText={setText}
+              autoFocus
+              textAlignVertical="top"
+              accessibilityLabel="Reply text"
+            />
+            <Text style={[styles.counter, nearLimit && styles.counterWarn]}>
+              {charsLeft} chars remaining
+            </Text>
+          </View>
+
+          <View style={{ flex: 1 }} />
         </View>
       )}
 
       {/* Send button */}
       <View style={styles.footer}>
         <PrimaryButton
-          label={`Send to ${to}`}
+          label={tab === 'Voice Reply' ? 'Sent via Voice' : tab === 'Text Reply' ? `Send to ${to}` : `Send to ${to}`}
           icon="paper-plane"
           onPress={send}
+          disabled={tab === 'Text Reply' ? !text.trim() : false}
+          style={styles.cta}
         />
       </View>
     </Screen>
@@ -215,5 +328,74 @@ const styles = StyleSheet.create({
     paddingTop: SPACING.sm,
     paddingBottom: SPACING.md,
     backgroundColor: COLORS.background,
+  },
+  voiceReplyContent: {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingVertical: SPACING.xl,
+  },
+  textReplyContent: {
+    flex: 1,
+    paddingBottom: SPACING.xl,
+  },
+  voiceInstruction: {
+    ...TYPOGRAPHY.bodyMedium,
+    color: COLORS.textSecondary,
+    textAlign: 'center',
+    marginBottom: SPACING.xl,
+    paddingHorizontal: SPACING.md,
+  },
+  pttWrap: {
+    alignItems: 'center',
+    gap: 12,
+  },
+  pttBtn: {
+    width: 118,
+    height: 118,
+    borderRadius: 59,
+    backgroundColor: COLORS.primary,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 4,
+    borderColor: 'rgba(37, 99, 235, 0.15)',
+  },
+  pttBtnActive: {
+    backgroundColor: COLORS.accent,
+    borderColor: 'rgba(8, 145, 178, 0.2)',
+  },
+  pttLabel: {
+    ...TYPOGRAPHY.label,
+    color: COLORS.textSecondary,
+    fontWeight: '600',
+  },
+  inputCard: {
+    backgroundColor: COLORS.card,
+    borderRadius: RADIUS.lg,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    padding: 14,
+    minHeight: 130,
+    marginHorizontal: 16,
+    ...SHADOW.xs,
+  },
+  input: {
+    ...TYPOGRAPHY.body,
+    color: COLORS.textPrimary,
+    minHeight: 90,
+    lineHeight: 22,
+  },
+  counter: {
+    ...TYPOGRAPHY.caption,
+    color: COLORS.textMuted,
+    textAlign: 'right',
+    marginTop: 6,
+  },
+  counterWarn: {
+    color: COLORS.warning,
+  },
+  cta: {
+    marginBottom: SPACING.lg,
+    marginHorizontal: 16,
   },
 });

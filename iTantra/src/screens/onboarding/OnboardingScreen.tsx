@@ -13,28 +13,28 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Onboarding'> & {
 
 const SLIDES = [
   {
-    key: 'mesh',
-    icon: 'access-point-network' as const,
-    iconLib: 'mci',
+    key: 'speak',
+    icon: 'mic-outline' as const,
+    iconLib: 'ionicons',
     accent: COLORS.primary,
-    title: 'Connect Anywhere',
-    body: 'iTantra works offline using nearby devices to send and receive messages in any language — no internet required.',
+    title: 'Speak',
+    body: 'Speak naturally. iTantra records on-device — no internet required.',
   },
   {
-    key: 'lang',
-    icon: 'language-outline' as const,
+    key: 'compress',
+    icon: 'document-text-outline' as const,
     iconLib: 'ionicons',
     accent: COLORS.accent,
-    title: 'Break Language Barriers',
-    body: 'Speak in your language. We translate and deliver the message instantly to anyone in range.',
+    title: 'Compress',
+    body: 'Your voice becomes compact text packets before it leaves the device.',
   },
   {
-    key: 'sos',
-    icon: 'shield-checkmark-outline' as const,
-    iconLib: 'ionicons',
+    key: 'connect',
+    icon: 'access-point-network' as const,
+    iconLib: 'mci',
     accent: COLORS.success,
-    title: 'Built for Emergencies',
-    body: 'Reliable, secure, and designed for critical situations when cellular networks fail.',
+    title: 'Connect',
+    body: 'Packets hop to nearby iTantra devices over Wi-Fi Direct or Bluetooth. Range is limited to peers in reach.',
   },
 ];
 

@@ -13,6 +13,7 @@ interface Props {
 /**
  * Concentric radar-style rings that expand and fade.
  * Used for PTT, incoming alert, and broadcasting states.
+ * Rings are absolutely positioned and do not participate in layout.
  */
 export default function PulsingRings({
   size = 150,
@@ -26,6 +27,9 @@ export default function PulsingRings({
   ).current;
 
   useEffect(() => {
+    if (active) {
+      anims.forEach(a => a.setValue(0));
+    }
     if (!active) {
       anims.forEach(a => a.setValue(0));
       return;
@@ -48,7 +52,7 @@ export default function PulsingRings({
   const maxScale = 1.85;
 
   return (
-    <View style={[styles.wrap, { width: size * maxScale, height: size * maxScale }]}>
+    <View style={[styles.wrap, { width: size, height: size }]}>
       {anims.map((anim, i) => {
         const scale = anim.interpolate({ inputRange: [0, 1], outputRange: [1, maxScale] });
         const opacity = anim.interpolate({ inputRange: [0, 0.2, 1], outputRange: [0.5, 0.25, 0] });
@@ -78,7 +82,19 @@ export default function PulsingRings({
 }
 
 const styles = StyleSheet.create({
-  wrap: { alignItems: 'center', justifyContent: 'center' },
-  ring: { position: 'absolute', borderWidth: 1.5 },
-  center: { alignItems: 'center', justifyContent: 'center' },
+  wrap: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    position: 'relative',
+  },
+  ring: {
+    position: 'absolute',
+    borderWidth: 1.5,
+    top: 0,
+    left: 0,
+  },
+  center: {
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
 });

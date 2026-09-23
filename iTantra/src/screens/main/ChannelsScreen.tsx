@@ -2,7 +2,6 @@ import React from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
-import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
 import Screen from '../../components/Screen';
 import SignalBars from '../../components/SignalBars';
@@ -11,10 +10,8 @@ import { useApp } from '../../context/AppContext';
 import { Channel } from '../../data/mockData';
 import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 
-type Nav = NativeStackNavigationProp<RootStackParamList>;
-
 export default function ChannelsScreen() {
-  const navigation = useNavigation<Nav>();
+  const navigation = useNavigation<any>();
   const { channels, channel, setChannel } = useApp();
 
   const renderItem = ({ item, index }: { item: Channel; index: number }) => {
@@ -59,7 +56,7 @@ export default function ChannelsScreen() {
           <View style={styles.cardFooter}>
             <View style={styles.peerRow}>
               <Ionicons name="people-outline" size={13} color={COLORS.textMuted} />
-              <Text style={styles.peerText}>{item.members} peers</Text>
+            <Text style={styles.peerText}>Logical channel</Text>
             </View>
             <SignalBars
               strength={item.signal}

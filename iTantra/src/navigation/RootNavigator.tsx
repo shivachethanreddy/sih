@@ -1,7 +1,7 @@
 import React from 'react';
 import { Platform, StyleSheet, Text, View } from 'react-native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createBottomTabNavigator, BottomTabScreenProps } from '@react-navigation/bottom-tabs';
 import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 
 import { MainTabParamList, RootStackParamList } from './types';
@@ -26,6 +26,7 @@ import AddCustomAlertScreen from '../screens/broadcast/AddCustomAlertScreen';
 
 import IncomingAlertScreen from '../screens/receiver/IncomingAlertScreen';
 import MessageReceivedScreen from '../screens/receiver/MessageReceivedScreen';
+import ConnectionRequestScreen from '../screens/receiver/ConnectionRequestScreen';
 
 import NowPlayingScreen from '../screens/receiver/NowPlayingScreen';
 import QuickResponseScreen from '../screens/receiver/QuickResponseScreen';
@@ -37,6 +38,10 @@ import EmergencyScreen from '../screens/utility/EmergencyScreen';
 import HelpScreen from '../screens/utility/HelpScreen';
 import AboutScreen from '../screens/utility/AboutScreen';
 import LanguageScreen from '../screens/utility/LanguageScreen';
+import DiagnosticsScreen from '../screens/utility/DiagnosticsScreen';
+import IncomingBridge from '../components/EngineStatus';
+
+import { useApp } from '../context/AppContext';
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 const Tab = createBottomTabNavigator<MainTabParamList>();
@@ -48,11 +53,20 @@ const TAB_ICONS: Record<
 > = {
   HomeTab:     { active: 'home',         inactive: 'home-outline',         label: 'Home'     },
   HistoryTab:  { active: 'time',         inactive: 'time-outline',         label: 'History'  },
-  ChannelsTab: { active: 'radio',        inactive: 'radio-outline',        label: 'Channels' },
+  ChannelsTab: { active: 'radio',        inactive: 'radio-outline',        label: 'Devices' },
   SettingsTab: { active: 'settings',     inactive: 'settings-outline',     label: 'Settings' },
 };
 
+// ─── Dynamic tab component that switches based on mode ───────────────────────
+const ChannelsTabContent: React.FC<any> = () => {
+  const { mode } = useApp();
+  return mode === 'private' ? <DevicesScreen /> : <ChannelsScreen />;
+};
+
 function MainTabs() {
+  const { mode } = useApp();
+  const channelsTabLabel = mode === 'private' ? 'Devices' : 'Channels';
+
   return (
     <Tab.Navigator
       id="MainTabs"
@@ -61,11 +75,10 @@ function MainTabs() {
         tabBarStyle: styles.tabBar,
         tabBarActiveTintColor: COLORS.primary,
         tabBarInactiveTintColor: COLORS.textMuted,
-        tabBarShowLabel: false, // We render a custom label in tabBarIcon
+        tabBarShowLabel: false,
         tabBarIcon: ({ focused, color }) => {
           const def = TAB_ICONS[route.name] ?? TAB_ICONS.HomeTab;
 
-          // Channels uses MaterialCommunityIcons
           const icon =
             route.name === 'ChannelsTab' ? (
               <MaterialCommunityIcons
@@ -81,6 +94,8 @@ function MainTabs() {
               />
             );
 
+          const label = route.name === 'ChannelsTab' ? channelsTabLabel : def.label;
+
           return (
             <View style={styles.tabItem}>
               {icon}
@@ -90,7 +105,7 @@ function MainTabs() {
                   { color: focused ? COLORS.primary : COLORS.textMuted },
                 ]}
               >
-                {def.label}
+                {label}
               </Text>
               {focused ? <View style={styles.tabDot} /> : null}
             </View>
@@ -100,7 +115,7 @@ function MainTabs() {
     >
       <Tab.Screen name="HomeTab"     component={HomeScreen}     />
       <Tab.Screen name="HistoryTab"  component={HistoryScreen}  />
-      <Tab.Screen name="ChannelsTab" component={ChannelsScreen} />
+      <Tab.Screen name="ChannelsTab" component={ChannelsTabContent} />
       <Tab.Screen name="SettingsTab" component={SettingsScreen} />
     </Tab.Navigator>
   );
@@ -114,6 +129,8 @@ interface Props {
 
 export default function RootNavigator({ hasOnboarded, onOnboardingDone }: Props) {
   return (
+    <>
+    <IncomingBridge />
     <Stack.Navigator
       id="RootStack"
       initialRouteName="Splash"
@@ -144,6 +161,7 @@ export default function RootNavigator({ hasOnboarded, onOnboardingDone }: Props)
       {/* Receiver */}
       <Stack.Screen name="IncomingAlert"   component={IncomingAlertScreen}  options={{ gestureEnabled: false }} />
       <Stack.Screen name="MessageReceived" component={MessageReceivedScreen} />
+      <Stack.Screen name="ConnectionRequest" component={ConnectionRequestScreen} options={{ gestureEnabled: false }} />
 
       <Stack.Screen name="NowPlaying"      component={NowPlayingScreen} />
       <Stack.Screen name="QuickResponse"   component={QuickResponseScreen} />
@@ -156,7 +174,9 @@ export default function RootNavigator({ hasOnboarded, onOnboardingDone }: Props)
       <Stack.Screen name="Help"           component={HelpScreen} />
       <Stack.Screen name="About"          component={AboutScreen} />
       <Stack.Screen name="Language"       component={LanguageScreen} />
+      <Stack.Screen name="Diagnostics"    component={DiagnosticsScreen} />
     </Stack.Navigator>
+    </>
   );
 }
 

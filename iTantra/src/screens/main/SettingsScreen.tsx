@@ -13,7 +13,7 @@ type Nav = NativeStackNavigationProp<RootStackParamList>;
 
 export default function SettingsScreen() {
   const navigation = useNavigation<Nav>();
-  const { settings, updateSettings, translateTo, appLanguage, channel, clearHistory } = useApp();
+  const { settings, updateSettings, speakLanguage, appLanguage, channel, clearHistory, mode } = useApp();
 
   const confirmClear = () => {
     Alert.alert(
@@ -63,19 +63,14 @@ export default function SettingsScreen() {
         <Slider value={settings.volume} onChange={v => updateSettings({ volume: v })} />
       </View>
 
-      {/* ── Translation ──────────────────────────────────── */}
-      <SectionLabel title="Translation" />
+      {/* ── Language Models ──────────────────────────────── */}
+      <SectionLabel title="Language Models" />
       <View style={styles.group}>
         <SettingRow
-          icon="sync-outline"
-          label="Auto Translate Voice"
-          value={settings.autoTranslate}
-          onToggle={v => updateSettings({ autoTranslate: v })}
-        />
-        <SettingRow
-          icon="language-outline"
-          label="Translate To"
-          rightText={translateTo}
+          icon="mic-outline"
+          label="Speech Model"
+          description="STT and TTS language loaded on this device"
+          rightText={speakLanguage}
           chevron
           onPress={() => navigation.navigate('Language')}
         />
@@ -92,13 +87,15 @@ export default function SettingsScreen() {
       {/* ── Network & Alerts ─────────────────────────────── */}
       <SectionLabel title="Network & Alerts" />
       <View style={styles.group}>
-        <SettingRow
-          icon="radio-outline"
-          label="Active Channel"
-          rightText={channel.label}
-          chevron
-          onPress={() => navigation.navigate('ChannelMonitor')}
-        />
+        {mode !== 'private' && (
+          <SettingRow
+            icon="radio-outline"
+            label="Active Channel"
+            rightText={channel.label}
+            chevron
+            onPress={() => navigation.navigate('ChannelMonitor')}
+          />
+        )}
         <SettingRow
           icon="warning-outline"
           label="Emergency Alerts"
@@ -144,16 +141,18 @@ export default function SettingsScreen() {
           onPress={() => navigation.navigate('Help')}
         />
         <SettingRow
+          icon="pulse-outline"
+          label="Diagnostics"
+          description="Engine, packets, and transport"
+          chevron
+          onPress={() => navigation.navigate('Diagnostics')}
+        />
+        <SettingRow
           icon="information-circle-outline"
           label="About iTantra"
           chevron
-          onPress={() => navigation.navigate('About')}
-        />
-        <SettingRow
-          icon="shield-checkmark-outline"
-          label="Version"
-          rightText="1.0.0"
           last
+          onPress={() => navigation.navigate('About')}
         />
       </View>
 

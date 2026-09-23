@@ -1,6 +1,11 @@
 apply plugin: "com.android.application"
 apply plugin: "org.jetbrains.kotlin.android"
+apply plugin: "org.jetbrains.kotlin.plugin.serialization"
+apply plugin: "com.google.devtools.ksp"
 apply plugin: "com.facebook.react"
+
+// Room schema export directory for versioned migrations
+def roomSchemaDir = new File(rootDir, "schemas")
 
 def projectRoot = rootDir.getAbsoluteFile().getParentFile().getAbsolutePath()
 
@@ -146,6 +151,10 @@ android {
     }
 }
 
+ksp {
+    arg("room.schemaLocation", "$roomSchemaDir")
+}
+
 // Apply static values from `gradle.properties` to the `android.packagingOptions`
 // Accepts values in comma delimited lists, example:
 // android.packagingOptions.pickFirsts=/LICENSE,**/picasa.ini
@@ -169,6 +178,14 @@ android {
 dependencies {
     // The version of react-native is set by the React Native Gradle Plugin
     implementation("com.facebook.react:react-android")
+
+    // Kotlinx Serialization
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.6.3")
+
+    // Room persistence
+    implementation("androidx.room:room-runtime:2.6.1")
+    implementation("androidx.room:room-ktx:2.6.1")
+    ksp("androidx.room:room-compiler:2.6.1")
 
     def isGifEnabled = (findProperty('expo.gif.enabled') ?: "") == "true";
     def isWebpEnabled = (findProperty('expo.webp.enabled') ?: "") == "true";
@@ -198,4 +215,16 @@ dependencies {
 if (rnVersion < versionToNumber(0, 75, 0)) {
     apply from: new File(["node", "--print", "require.resolve('@react-native-community/cli-platform-android/package.json', { paths: [require.resolve('react-native/package.json')] })"].execute(null, rootDir).text.trim(), "../native_modules.gradle");
     applyNativeModulesAppBuildGradle(project)
+}
+
+// Pin AndroidX version that is compatible with AGP 8.2.1 / compileSdk 34.
+// expo-modules-core / react-native constraints resolve androidx.core to 1.17.0,
+// whose AAR metadata requires AGP 8.9.1+ / compileSdk 36.
+configurations.all {
+    resolutionStrategy {
+        force 'androidx.core:core:1.13.0'
+        force 'androidx.core:core-ktx:1.13.0'
+        force 'androidx.transition:transition:1.4.1'
+        force 'androidx.transition:transition-ktx:1.4.1'
+    }
 }

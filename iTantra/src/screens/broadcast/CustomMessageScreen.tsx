@@ -7,20 +7,21 @@ import Header from '../../components/Header';
 import PrimaryButton from '../../components/PrimaryButton';
 import SelectRow from '../../components/SelectRow';
 import { useApp } from '../../context/AppContext';
-import { LANGUAGES } from '../../data/mockData';
 import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'CustomMessage'>;
 const MAX = 200;
 
 export default function CustomMessageScreen({ navigation }: Props) {
-  const { channel, sendCustomMessage } = useApp();
+  const { mode, channel, selectedDevice, sendCustomMessage, sendDirectMessage, speakLanguage } = useApp();
   const [text, setText] = useState('');
-  const [translate, setTranslate] = useState('Telugu');
+  const isPrivate = mode === 'private';
 
   const send = () => {
     if (!text.trim()) return;
-    const msg = sendCustomMessage(text.trim(), translate);
+    const msg = isPrivate
+      ? sendDirectMessage(text.trim(), selectedDevice.name)
+      : sendCustomMessage(text.trim());
     navigation.navigate('Broadcasting', { messageId: msg.id });
   };
 
@@ -50,23 +51,20 @@ export default function CustomMessageScreen({ navigation }: Props) {
         </Text>
       </View>
 
-      {/* Translate */}
-      <Text style={styles.sectionLabel}>Translate to (optional)</Text>
-      <View style={styles.card}>
-        <SelectRow
-          value={translate}
-          options={LANGUAGES.map(l => l.name)}
-          onChange={setTranslate}
-        />
-      </View>
-
       {/* Broadcast settings */}
-      <Text style={styles.sectionLabel}>Broadcast settings</Text>
+      <Text style={styles.sectionLabel}>{isPrivate ? 'Private settings' : 'Broadcast settings'}</Text>
       <View style={styles.card}>
         <SelectRow
-          label="Channel"
-          value={channel.label}
-          options={[channel.label]}
+          label={isPrivate ? 'To Device' : 'Channel'}
+          value={isPrivate ? selectedDevice.name : channel.label}
+          options={[isPrivate ? selectedDevice.name : channel.label]}
+          onChange={() => {}}
+        />
+        <View style={styles.settingDivider} />
+        <SelectRow
+          label="Speech Language"
+          value={speakLanguage}
+          options={[speakLanguage]}
           onChange={() => {}}
         />
         <View style={styles.settingDivider} />
@@ -81,7 +79,7 @@ export default function CustomMessageScreen({ navigation }: Props) {
       <View style={{ flex: 1 }} />
 
       <PrimaryButton
-        label="Broadcast Message"
+        label={isPrivate ? 'Send to Device' : 'Broadcast Message'}
         icon="paper-plane"
         onPress={send}
         disabled={!text.trim()}

@@ -39,7 +39,7 @@ export default function NowPlayingScreen({ navigation, route }: Props) {
 
   useEffect(() => {
     if (settings.textToSpeech) {
-      synthesizeSpeech(msg.translatedText ?? msg.originalText, msg.language);
+      synthesizeSpeech(msg.originalText, msg.language);
     }
     runProgress(0);
     const timer = setInterval(
@@ -120,14 +120,6 @@ export default function NowPlayingScreen({ navigation, route }: Props) {
         </View>
         <Text style={styles.originalText}>"{msg.originalText}"</Text>
 
-        {msg.translatedText ? (
-          <View style={styles.translationBox}>
-            <Text style={styles.translationLang}>
-              Translated · {msg.translatedTo ?? 'English'}
-            </Text>
-            <Text style={styles.translatedText}>"{msg.translatedText}"</Text>
-          </View>
-        ) : null}
       </View>
 
       {/* Controls */}
@@ -250,25 +242,6 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.body,
     color: COLORS.textPrimary,
     lineHeight: 24,
-    fontStyle: 'italic',
-  },
-  translationBox: {
-    marginTop: 12,
-    paddingTop: 12,
-    borderTopWidth: 1,
-    borderTopColor: COLORS.borderSoft,
-  },
-  translationLang: {
-    ...TYPOGRAPHY.captionMedium,
-    color: COLORS.accent,
-    fontWeight: '600',
-    marginBottom: 6,
-  },
-  translatedText: {
-    ...TYPOGRAPHY.body,
-    color: COLORS.textPrimary,
-    lineHeight: 24,
-    fontWeight: '500',
     fontStyle: 'italic',
   },
   controls: {

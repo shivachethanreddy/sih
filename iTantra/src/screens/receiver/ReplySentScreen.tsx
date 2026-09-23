@@ -12,7 +12,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'ReplySent'>;
 export default function ReplySentScreen({ navigation, route }: Props) {
   const scale = useRef(new Animated.Value(0.3)).current;
   const opacity = useRef(new Animated.Value(0)).current;
-  const to = route.params?.to ?? 'Rescue_01';
+  const to = route.params?.to ?? 'Device_A';
 
   useEffect(() => {
     Animated.parallel([

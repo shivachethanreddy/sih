@@ -12,12 +12,6 @@ import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'ChannelMonitor'>;
 
-const BLIPS = [
-  { top: 42, left: '30%' },
-  { top: 95, right: '22%' },
-  { top: 145, left: '20%' },
-];
-
 export default function ChannelMonitorScreen({ navigation }: Props) {
   const { channels, channel, setChannel, devices } = useApp();
   const [index, setIndex] = useState(
@@ -78,65 +72,30 @@ export default function ChannelMonitorScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
-      {/* Radar */}
+      {/* Radar — topology is not provided by the engine */}
       <View style={styles.radarCard}>
         <View style={styles.radarHeader}>
-          <Text style={styles.radarTitle}>Active Node Radar</Text>
-          <Text style={styles.radarRange}>Range: 500 m</Text>
+          <Text style={styles.radarTitle}>Mesh topology</Text>
+          <Text style={styles.radarRange}>Unavailable</Text>
         </View>
-
-        <View style={styles.radar}>
-          {[220, 150, 80].map(d => (
-            <View
-              key={d}
-              style={[
-                styles.ring,
-                { width: d, height: d, borderRadius: d / 2 },
-              ]}
-            />
-          ))}
-          <View style={styles.crossH} />
-          <View style={styles.crossV} />
-
-          {/* Sweep */}
-          <Animated.View
-            style={[
-              styles.sweepWrap,
-              { transform: [{ rotate }] },
-            ]}
-          >
-            <View style={styles.sweepLine} />
-          </Animated.View>
-
-          {/* Blips */}
-          {BLIPS.slice(0, Math.min(devices.length, 3)).map((pos, i) => (
-            <View key={i} style={[styles.blip, pos as object]}>
-              <View style={styles.blipGlow} />
-            </View>
-          ))}
-
-          {/* Center */}
-          <View style={styles.radarCenter}>
-            <MaterialCommunityIcons
-              name="radio-handheld"
-              size={22}
-              color={COLORS.primary}
-            />
-          </View>
-        </View>
+        <Text style={styles.topoHint}>
+          The engine does not report node positions. Showing discovered peers as a list instead of a fabricated map.
+        </Text>
       </View>
 
       {/* Detected nodes */}
       <View style={styles.nodesHeader}>
         <Text style={styles.nodesTitle}>Detected nodes</Text>
-        <Text style={styles.nodesCount}>{devices.length} online</Text>
+        <Text style={styles.nodesCount}>{devices.length} discovered</Text>
       </View>
 
       <View style={styles.nodesList}>
-        {devices.slice(0, 3).map((d, i) => (
+        {devices.length === 0 ? (
+          <Text style={styles.topoHint}>No devices reported by the engine.</Text>
+        ) : devices.map((d, i) => (
           <View
             key={d.id}
-            style={[styles.nodeRow, i < Math.min(devices.length, 3) - 1 && styles.nodeRowBorder]}
+            style={[styles.nodeRow, i < devices.length - 1 && styles.nodeRowBorder]}
           >
             <View style={styles.nodeAvatar}>
               <MaterialCommunityIcons
@@ -147,11 +106,11 @@ export default function ChannelMonitorScreen({ navigation }: Props) {
             </View>
             <View style={styles.nodeInfo}>
               <Text style={styles.nodeName}>{d.name}</Text>
-              <Text style={styles.nodeDist}>{d.distance} away</Text>
+              <Text style={styles.nodeDist}>{d.transport ?? 'UNKNOWN'} · {d.connectionState ?? '—'}</Text>
             </View>
             <View style={styles.nodeRight}>
               <SignalBars strength={d.signal} size={14} color={COLORS.primary} />
-              <Text style={styles.nodeRssi}>−{54 + (4 - d.signal) * 10} dBm</Text>
+              <Text style={styles.nodeRssi}>{d.nodeId ? `ID ${d.nodeId}` : d.id}</Text>
             </View>
           </View>
         ))}

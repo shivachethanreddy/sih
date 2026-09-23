@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 import { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
@@ -6,18 +6,15 @@ import Screen from '../../components/Screen';
 import Header from '../../components/Header';
 import AlertIcon from '../../components/AlertIcon';
 import PrimaryButton from '../../components/PrimaryButton';
-import SelectRow from '../../components/SelectRow';
 import StatusBadge from '../../components/StatusBadge';
 import { useApp } from '../../context/AppContext';
-import { LANGUAGES } from '../../data/mockData';
 import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 
 type Props = NativeStackScreenProps<RootStackParamList, 'AlertDetail'>;
 
 export default function AlertDetailScreen({ navigation, route }: Props) {
-  const { alerts, channel, broadcastAlert } = useApp();
+  const { alerts, channel, broadcastAlert, mode } = useApp();
   const alert = alerts.find(a => a.id === route.params.alertId);
-  const [translate, setTranslate] = useState('Telugu');
 
   if (!alert) return null;
 
@@ -25,7 +22,7 @@ export default function AlertDetailScreen({ navigation, route }: Props) {
     alert.priority === 'SOS' ? 'urgent' : alert.priority === 'High' ? 'high' : 'normal';
 
   const broadcast = () => {
-    const msg = broadcastAlert(alert, translate);
+    const msg = broadcastAlert(alert);
     navigation.navigate('Broadcasting', { messageId: msg.id });
   };
 
@@ -48,24 +45,18 @@ export default function AlertDetailScreen({ navigation, route }: Props) {
       {/* Divider */}
       <View style={styles.divider} />
 
-      {/* Translate section */}
-      <Text style={styles.sectionLabel}>Translate to (optional)</Text>
-      <View style={styles.card}>
-        <SelectRow
-          value={translate}
-          options={LANGUAGES.map(l => l.name)}
-          onChange={setTranslate}
-        />
-      </View>
-
-      {/* Broadcast settings */}
+{/* Broadcast settings */}
       <Text style={styles.sectionLabel}>Broadcast settings</Text>
       <View style={styles.card}>
-        <View style={styles.metaRow}>
-          <Text style={styles.metaLabel}>Channel</Text>
-          <Text style={styles.metaValue}>{channel.label}</Text>
-        </View>
-        <View style={styles.metaDivider} />
+        {mode !== 'private' && (
+          <>
+            <View style={styles.metaRow}>
+              <Text style={styles.metaLabel}>Channel</Text>
+              <Text style={styles.metaValue}>{channel.label}</Text>
+            </View>
+            <View style={styles.metaDivider} />
+          </>
+        )}
         <View style={styles.metaRow}>
           <Text style={styles.metaLabel}>Priority</Text>
           <StatusBadge

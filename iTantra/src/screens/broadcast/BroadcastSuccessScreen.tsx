@@ -11,8 +11,10 @@ import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'BroadcastSuccess'>;
 
 export default function BroadcastSuccessScreen({ navigation, route }: Props) {
-  const { devices, channel, messages } = useApp();
+  const { channel, messages } = useApp();
   const msg = messages.find(m => m.id === route.params.messageId);
+  const isDirect = Boolean(msg?.to);
+  const delivered = msg?.status === 'DELIVERED';
 
   const scale = useRef(new Animated.Value(0.3)).current;
   const opacity = useRef(new Animated.Value(0)).current;
@@ -43,17 +45,22 @@ export default function BroadcastSuccessScreen({ navigation, route }: Props) {
           </View>
         </Animated.View>
 
-        <Text style={styles.title}>Broadcast Sent</Text>
+        <Text style={styles.title}>
+          {delivered ? (isDirect ? 'Message delivered' : 'Broadcast delivered') : 'Delivery pending'}
+        </Text>
         <Text style={styles.subtitle}>
-          Delivered to {devices.length} device{devices.length !== 1 ? 's' : ''} on{' '}
-          <Text style={styles.channelName}>{channel.label}</Text>
+          {delivered
+            ? isDirect
+              ? `ACK received${msg?.to ? ` from ${msg.to}` : ''}`
+              : `ACK received on ${channel.label}`
+            : 'The engine has not confirmed delivery yet.'}
         </Text>
 
         {/* Stats row */}
         <View style={styles.statsRow}>
           <View style={styles.stat}>
-            <Text style={styles.statValue}>{devices.length}</Text>
-            <Text style={styles.statLabel}>Devices</Text>
+            <Text style={styles.statValue}>{msg?.status ?? 'SENDING'}</Text>
+            <Text style={styles.statLabel}>Status</Text>
           </View>
           <View style={styles.statDivider} />
           <View style={styles.stat}>
@@ -144,22 +151,26 @@ const styles = StyleSheet.create({
     borderColor: COLORS.border,
     paddingVertical: SPACING.md,
     paddingHorizontal: SPACING.lg,
-    gap: 0,
     ...SHADOW.xs,
   },
   stat: {
     flex: 1,
     alignItems: 'center',
     gap: 3,
+    minWidth: 0,
   },
   statValue: {
     ...TYPOGRAPHY.titleSmall,
     color: COLORS.textPrimary,
     fontWeight: '700',
+    textAlign: 'center',
+    maxWidth: '100%',
   },
   statLabel: {
     ...TYPOGRAPHY.caption,
     color: COLORS.textMuted,
+    textAlign: 'center',
+    maxWidth: '100%',
   },
   statDivider: {
     width: 1,

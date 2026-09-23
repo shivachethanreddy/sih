@@ -13,7 +13,7 @@ type Props = NativeStackScreenProps<RootStackParamList, 'Emergency'>;
 const HOLD_MS = 2000;
 
 export default function EmergencyScreen({ navigation }: Props) {
-  const { broadcastAlert } = useApp();
+  const { sendSos } = useApp();
   const [holding, setHolding] = useState(false);
   const progress = useRef(new Animated.Value(0)).current;
   const anim = useRef<Animated.CompositeAnimation | null>(null);
@@ -32,17 +32,9 @@ export default function EmergencyScreen({ navigation }: Props) {
         done.current = true;
         setHolding(false);
         progress.setValue(0);
-        const msg = broadcastAlert({
-          id: 'sos',
-          kind: 'medical',
-          title: 'DISTRESS SOS',
-          message:
-            'EMERGENCY! Immediate medical and rescue assistance required at my coordinates.',
-          language: 'English',
-          priority: 'SOS',
-          enabled: true,
+        sendSos().then(msg => {
+          navigation.replace('Broadcasting', { messageId: msg.id });
         });
-        navigation.replace('Broadcasting', { messageId: msg.id });
       }
     });
   };
@@ -123,9 +115,9 @@ export default function EmergencyScreen({ navigation }: Props) {
         {/* Telemetry card */}
         <View style={styles.telemetryCard}>
           {[
-            { key: 'Routing', val: 'Gossip Flood · TTL: 7' },
-            { key: 'Override', val: 'All Channels', danger: true },
-            { key: 'Security', val: 'CRC-16 Broadcast' },
+            { key: 'Routing', val: 'Highest priority flood' },
+            { key: 'Override', val: 'All logical channels', danger: true },
+            { key: 'Confirm', val: 'Shown after engine ACK' },
           ].map((row, i) => (
             <View
               key={i}

@@ -16,6 +16,7 @@ export type RootStackParamList = {
   // Receiver flow
   IncomingAlert: undefined;
   MessageReceived: { messageId: string };
+  ConnectionRequest: { from: string; fromName: string; deviceId: string };
 
   NowPlaying: { messageId: string };
   QuickResponse: { to?: string };
@@ -28,6 +29,7 @@ export type RootStackParamList = {
   Help: undefined;
   About: undefined;
   Language: undefined;
+  Diagnostics: undefined;
 };
 
 export type MainTabParamList = {

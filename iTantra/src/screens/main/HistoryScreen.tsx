@@ -1,6 +1,6 @@
 import React, { useMemo, useState } from 'react';
 import { FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { Ionicons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { useNavigation } from '@react-navigation/native';
 import { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RootStackParamList } from '../../navigation/types';
@@ -17,8 +17,14 @@ const FILTERS = ['All', 'Received', 'Sent', 'Alerts'] as const;
 
 export default function HistoryScreen() {
   const navigation = useNavigation<Nav>();
-  const { messages, synthesizeSpeech } = useApp();
+  const { messages, synthesizeSpeech, mode } = useApp();
   const [filter, setFilter] = useState<(typeof FILTERS)[number]>('All');
+
+  const isPrivate = mode === 'private';
+  const sideButtonLabel = isPrivate ? 'Device' : 'Channel';
+  const sideButtonIcon = isPrivate ? 'cellphone-link' : 'radio';
+  const sideButtonTarget = isPrivate ? 'Devices' : 'ChannelsTab';
+  const SideButtonIcon = isPrivate ? MaterialCommunityIcons : Ionicons;
 
   const data = useMemo(() => {
     if (filter === 'All') return messages;
@@ -79,7 +85,6 @@ export default function HistoryScreen() {
           <Text style={styles.rowMeta} numberOfLines={1}>
             {isSent ? `To: ${item.to ?? 'All Peers'}` : `From: ${item.from}`}
             {item.language ? `  ·  ${item.language}` : ''}
-            {item.translatedTo ? ` → ${item.translatedTo}` : ''}
           </Text>
         </View>
 
@@ -103,8 +108,20 @@ export default function HistoryScreen() {
     <Screen padded hideBack>
       {/* Header */}
       <View style={styles.header}>
-        <Text style={styles.title}>History</Text>
-        <Text style={styles.subtitle}>{messages.length} voice messages stored</Text>
+        <View style={styles.headerRow}>
+          <View style={styles.headerLeft}>
+            <Text style={styles.title}>History</Text>
+            <Text style={styles.subtitle}>{messages.length} voice messages stored</Text>
+          </View>
+          <Pressable
+            style={styles.sideBtn}
+            onPress={() => navigation.navigate(sideButtonTarget as any)}
+            accessibilityLabel={sideButtonLabel}
+            hitSlop={10}
+          >
+            <SideButtonIcon name={sideButtonIcon as any} size={20} color={COLORS.textPrimary} />
+          </Pressable>
+        </View>
       </View>
 
       {/* Filter chips */}
@@ -158,6 +175,14 @@ const styles = StyleSheet.create({
     marginTop: SPACING.sm,
     marginBottom: 14,
   },
+  headerRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+  headerLeft: {
+    flex: 1,
+  },
   title: {
     ...TYPOGRAPHY.headline,
     color: COLORS.textPrimary,
@@ -166,6 +191,17 @@ const styles = StyleSheet.create({
     ...TYPOGRAPHY.bodySmall,
     color: COLORS.textSecondary,
     marginTop: 2,
+  },
+  sideBtn: {
+    width: 40,
+    height: 40,
+    borderRadius: RADIUS.sm,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    alignItems: 'center',
+    justifyContent: 'center',
+    ...SHADOW.xs,
   },
 
   // Chips

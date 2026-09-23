@@ -9,6 +9,7 @@ interface Props {
   nodesOnline?: number;
   statusText?: string;
   isTransmitting?: boolean;
+  isPrivate?: boolean;
 }
 
 export default function LcdDisplay({
@@ -17,6 +18,7 @@ export default function LcdDisplay({
   nodesOnline = 8,
   statusText = 'Mesh Connected',
   isTransmitting = false,
+  isPrivate = false,
 }: Props) {
   const statusColor = isTransmitting ? COLORS.accent : COLORS.success;
   const statusLabel = isTransmitting ? 'Transmitting' : statusText;
@@ -35,17 +37,22 @@ export default function LcdDisplay({
       <View style={styles.mainRow}>
         <View>
           <Text style={styles.channelLabel}>{channelLabel}</Text>
-          <Text style={styles.freqText}>{frequency} · Direct Mesh</Text>
+          <Text style={styles.freqText}>
+            {frequency}
+            {!isPrivate && ' · Direct Mesh'}
+          </Text>
         </View>
 
-        <View style={styles.meshBadge}>
-          <MaterialCommunityIcons
-            name="access-point-network"
-            size={14}
-            color={COLORS.primary}
-          />
-          <Text style={styles.meshText}>{nodesOnline} Peers</Text>
-        </View>
+        {!isPrivate && (
+          <View style={styles.meshBadge}>
+            <MaterialCommunityIcons
+              name="access-point-network"
+              size={14}
+              color={COLORS.primary}
+            />
+            <Text style={styles.meshText}>{nodesOnline} Peers</Text>
+          </View>
+        )}
       </View>
     </View>
   );

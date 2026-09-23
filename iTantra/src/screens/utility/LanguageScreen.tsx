@@ -14,7 +14,7 @@ import { COLORS, RADIUS, SHADOW, SPACING, TYPOGRAPHY } from '../../theme';
 type Props = NativeStackScreenProps<RootStackParamList, 'Language'>;
 
 export default function LanguageScreen({ navigation }: Props) {
-  const { appLanguage, setAppLanguage, translateTo, setTranslateTo } = useApp();
+  const { appLanguage, setAppLanguage, speakLanguage, setSpeakLanguage } = useApp();
 
   return (
     <Screen padded scroll>
@@ -43,38 +43,40 @@ export default function LanguageScreen({ navigation }: Props) {
         </Pressable>
       </View>
 
-      {/* Translate To */}
-      <SectionLabel title="Translate Incoming Messages To" />
-      <View style={styles.card}>
-        {LANGUAGES.map((l, i) => {
-          const selected = translateTo === l.name;
-          return (
-            <Pressable
-              key={l.code}
-              style={({ pressed }) => [
-                styles.row,
-                i < LANGUAGES.length - 1 && styles.rowBorder,
-                pressed && styles.rowPressed,
-              ]}
-              onPress={() => setTranslateTo(l.name)}
-              accessibilityRole="radio"
-              accessibilityState={{ checked: selected }}
-            >
-              <View style={styles.langInfo}>
-                <Text style={styles.langName}>{l.name}</Text>
-                <Text style={styles.langNative}>{l.native}</Text>
+{/* Speech model */}
+      <SectionLabel title="Speech / TTS Model Language" />
+      {LANGUAGES.map((l, i) => {
+        const selected = speakLanguage === l.name;
+        const isFirst = i === 0;
+        const isLast = i === LANGUAGES.length - 1;
+        return (
+          <Pressable
+            key={l.code}
+            style={({ pressed }) => [
+              styles.rowCard,
+              isFirst && styles.rowCardFirst,
+              isLast && styles.rowCardLast,
+              !isLast && styles.rowBorder,
+              pressed && styles.rowPressed,
+            ]}
+            onPress={() => setSpeakLanguage(l.name)}
+            accessibilityRole="radio"
+            accessibilityState={{ checked: selected }}
+          >
+            <View style={styles.langInfo}>
+              <Text style={styles.langName}>{l.name}</Text>
+              <Text style={styles.langNative}>{l.native}</Text>
+            </View>
+            {selected ? (
+              <View style={styles.checkWrap}>
+                <Ionicons name="checkmark" size={14} color={COLORS.white} />
               </View>
-              {selected ? (
-                <View style={styles.checkWrap}>
-                  <Ionicons name="checkmark" size={14} color={COLORS.white} />
-                </View>
-              ) : (
-                <View style={styles.radioEmpty} />
-              )}
-            </Pressable>
-          );
-        })}
-      </View>
+            ) : (
+              <View style={styles.radioEmpty} />
+            )}
+          </Pressable>
+        );
+      })}
 
       <View style={{ flex: 1, minHeight: SPACING.xl }} />
 
@@ -97,6 +99,25 @@ const styles = StyleSheet.create({
     overflow: 'hidden',
     marginBottom: 4,
     ...SHADOW.xs,
+  },
+  rowCard: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    minHeight: 52,
+    backgroundColor: COLORS.card,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  rowCardFirst: {
+    borderTopLeftRadius: RADIUS.lg,
+    borderTopRightRadius: RADIUS.lg,
+  },
+  rowCardLast: {
+    borderBottomLeftRadius: RADIUS.lg,
+    borderBottomRightRadius: RADIUS.lg,
   },
   row: {
     flexDirection: 'row',
